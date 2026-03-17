@@ -1,0 +1,86 @@
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0.97 0.005 250;
+    --foreground: 0.15 0.04 250;
+    --card: 1 0 0;
+    --card-foreground: 0.15 0.04 250;
+    --popover: 1 0 0;
+    --popover-foreground: 0.15 0.04 250;
+    --primary: 0.68 0.18 50;
+    --primary-foreground: 1 0 0;
+    --secondary: 0.94 0.01 250;
+    --secondary-foreground: 0.15 0.04 250;
+    --muted: 0.94 0.01 250;
+    --muted-foreground: 0.5 0.03 250;
+    --accent: 0.68 0.18 50;
+    --accent-foreground: 1 0 0;
+    --destructive: 0.55 0.2 25;
+    --destructive-foreground: 1 0 0;
+    --border: 0.88 0.02 250;
+    --input: 0.88 0.02 250;
+    --ring: 0.68 0.18 50;
+    --radius: 0.75rem;
+    --chart-1: 0.68 0.18 50;
+    --chart-2: 0.55 0.18 145;
+    --chart-3: 0.6 0.18 220;
+    --chart-4: 0.65 0.15 290;
+    --chart-5: 0.72 0.15 170;
+    --sidebar: 0.14 0.045 255;
+    --sidebar-foreground: 0.92 0.01 250;
+    --sidebar-primary: 0.68 0.18 50;
+    --sidebar-primary-foreground: 1 0 0;
+    --sidebar-accent: 0.22 0.05 255;
+    --sidebar-accent-foreground: 0.92 0.01 250;
+    --sidebar-border: 0.22 0.05 255;
+    --sidebar-ring: 0.68 0.18 50;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Bricolage Grotesque", system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .sidebar-nav-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-150;
+    color: oklch(var(--sidebar-foreground) / 0.7);
+  }
+  .sidebar-nav-link:hover {
+    background: oklch(var(--sidebar-accent));
+    color: oklch(var(--sidebar-foreground));
+  }
+  .sidebar-nav-link.active {
+    background: oklch(var(--sidebar-primary) / 0.15);
+    color: oklch(var(--sidebar-primary));
+    border-left: 3px solid oklch(var(--sidebar-primary));
+  }
+  .demand-high {
+    @apply bg-red-100 text-red-700 border-red-200;
+  }
+  .demand-medium {
+    @apply bg-yellow-100 text-yellow-700 border-yellow-200;
+  }
+  .demand-low {
+    @apply bg-green-100 text-green-700 border-green-200;
+  }
+}
