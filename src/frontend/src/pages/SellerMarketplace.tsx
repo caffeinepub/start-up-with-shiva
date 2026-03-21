@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Phone, Plus } from "lucide-react";
+import { Loader2, MessageSquare, Phone, Plus } from "lucide-react";
 import { useState } from "react";
+import type { ComposeTarget } from "../App";
 import { useGetAllListings, usePostListing } from "../hooks/useQueries";
 
 const CATEGORIES = [
@@ -33,7 +34,13 @@ const CATEGORIES = [
   "Technology",
 ];
 
-export default function SellerMarketplace() {
+interface SellerMarketplaceProps {
+  onMessage?: (target: ComposeTarget) => void;
+}
+
+export default function SellerMarketplace({
+  onMessage,
+}: SellerMarketplaceProps) {
   const { data: listings, isLoading } = useGetAllListings();
   const postListing = usePostListing();
   const [open, setOpen] = useState(false);
@@ -264,6 +271,23 @@ export default function SellerMarketplace() {
                     <Phone className="w-3 h-3" />
                     <span>{listing.contactPhone}</span>
                   </div>
+                )}
+                {onMessage && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-2 mt-1 hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={() =>
+                      onMessage({
+                        recipientId: listing.owner.toText(),
+                        recipientName: "",
+                        subject: `Re: ${listing.title}`,
+                      })
+                    }
+                    data-ocid={`sellers.message.button.${i + 1}`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" /> Message Seller
+                  </Button>
                 )}
               </CardContent>
             </Card>

@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Phone, Plus } from "lucide-react";
+import { Loader2, MessageSquare, Phone, Plus } from "lucide-react";
 import { useState } from "react";
+import type { ComposeTarget } from "../App";
 import {
   useGetAllBuyerRequests,
   usePostBuyerRequest,
@@ -37,7 +38,11 @@ const CATEGORIES = [
   "Other",
 ];
 
-export default function BuyersBoard() {
+interface BuyersBoardProps {
+  onMessage?: (target: ComposeTarget) => void;
+}
+
+export default function BuyersBoard({ onMessage }: BuyersBoardProps) {
   const { data: requests, isLoading } = useGetAllBuyerRequests();
   const postRequest = usePostBuyerRequest();
   const [open, setOpen] = useState(false);
@@ -264,6 +269,23 @@ export default function BuyersBoard() {
                     <Phone className="w-3 h-3" />
                     <span>{req.contactPhone}</span>
                   </div>
+                )}
+                {onMessage && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-2 mt-1 hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={() =>
+                      onMessage({
+                        recipientId: req.owner.toText(),
+                        recipientName: "",
+                        subject: `Re: ${req.title}`,
+                      })
+                    }
+                    data-ocid={`buyers.message.button.${i + 1}`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" /> Message Buyer
+                  </Button>
                 )}
               </CardContent>
             </Card>

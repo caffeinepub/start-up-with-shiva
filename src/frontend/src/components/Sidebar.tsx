@@ -8,6 +8,7 @@ import {
   Lightbulb,
   Map as MapIcon,
   MapPin,
+  MessageSquare,
   Search,
   ShoppingBag,
   ShoppingCart,
@@ -23,6 +24,7 @@ interface SidebarProps {
   onNavigate: (page: Page) => void;
   isOpen: boolean;
   onClose: () => void;
+  unreadMessages?: number;
 }
 
 type NavItem = {
@@ -77,6 +79,12 @@ const navItems: NavItem[] = [
     icon: MapPin,
     group: "community",
   },
+  {
+    page: "messages",
+    label: "Messages",
+    icon: MessageSquare,
+    group: "community",
+  },
   { page: "subscription", label: "Subscription", icon: CreditCard },
 ];
 
@@ -85,6 +93,7 @@ export default function Sidebar({
   onNavigate,
   isOpen,
   onClose,
+  unreadMessages = 0,
 }: SidebarProps) {
   let lastGroup = "";
 
@@ -150,7 +159,12 @@ export default function Sidebar({
                 }`}
               >
                 <Icon className="w-4 h-4 flex-shrink-0" />
-                <span>{label}</span>
+                <span className="flex-1">{label}</span>
+                {page === "messages" && unreadMessages > 0 && (
+                  <span className="ml-auto flex-shrink-0 bg-primary text-primary-foreground text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+                    {unreadMessages > 99 ? "99+" : unreadMessages}
+                  </span>
+                )}
               </button>
             </div>
           );

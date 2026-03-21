@@ -1,8 +1,10 @@
 import { Toaster } from "@/components/ui/sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import Header from "./components/Header";
 import ProfileModal from "./components/ProfileModal";
 import Sidebar from "./components/Sidebar";
+import { useGetMyInbox } from "./hooks/useQueries";
 import AdminDashboard from "./pages/AdminDashboard";
 import BusinessIdeas from "./pages/BusinessIdeas";
 import BuyersBoard from "./pages/BuyersBoard";
@@ -10,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import DemandMap from "./pages/DemandMap";
 import ImportExport from "./pages/ImportExport";
 import InvestorsHub from "./pages/InvestorsHub";
+import Messages from "./pages/Messages";
 import PartnershipBoard from "./pages/PartnershipBoard";
 import PlaceNeeds from "./pages/PlaceNeeds";
 import ProblemDiscovery from "./pages/ProblemDiscovery";
@@ -35,7 +38,8 @@ export type Page =
   | "suppliers"
   | "subscription"
   | "success-stories"
-  | "place-needs";
+  | "place-needs"
+  | "messages";
 
 export type AccountType = "seller" | "buyer" | "investor" | "partner";
 
@@ -47,11 +51,40 @@ export interface UserProfile {
   accountType: AccountType;
 }
 
+export interface ComposeTarget {
+  recipientId: string;
+  recipientName: string;
+  subject?: string;
+}
+
+function playChime() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  } catch {}
+}
+
 function MainApp() {
   const [page, setPage] = useState<Page>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [pendingCompose, setPendingCompose] = useState<ComposeTarget | null>(
+    null,
+  );
+
+  const { data: inbox } = useGetMyInbox();
+  const unreadCount = (inbox ?? []).filter((m) => !m.isRead).length;
+  const prevUnreadRef = useRef(unreadCount);
+  const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
     const stored = localStorage.getItem("startup-shiva-profile");
@@ -62,10 +95,48 @@ function MainApp() {
     }
   }, []);
 
+  // Notification effect — only fires after initial load
+  useEffect(() => {
+    if (isInitialLoadRef.current) {
+      // Skip the first time inbox loads
+      if (inbox !== undefined) {
+        prevUnreadRef.current = unreadCount;
+        isInitialLoadRef.current = false;
+      }
+      return;
+    }
+
+    if (unreadCount > prevUnreadRef.current) {
+      const unreadMessages = (inbox ?? []).filter((m) => !m.isRead);
+      const newest = unreadMessages[0];
+      const title = newest
+        ? `New message from ${newest.senderName ?? "Someone"}`
+        : "New message";
+      const description = newest?.subject ?? "You have a new message";
+
+      playChime();
+      toast(title, {
+        description,
+        action: {
+          label: "View",
+          onClick: () => setPage("messages"),
+        },
+      });
+    }
+
+    prevUnreadRef.current = unreadCount;
+  }, [unreadCount, inbox]);
+
   const handleSaveProfile = (p: UserProfile) => {
     localStorage.setItem("startup-shiva-profile", JSON.stringify(p));
     setProfile(p);
     setShowProfileModal(false);
+  };
+
+  const handleOpenCompose = (target: ComposeTarget) => {
+    setPendingCompose(target);
+    setPage("messages");
+    setSidebarOpen(false);
   };
 
   const renderPage = () => {
@@ -75,13 +146,13 @@ function MainApp() {
       case "problems":
         return <ProblemDiscovery />;
       case "sellers":
-        return <SellerMarketplace />;
+        return <SellerMarketplace onMessage={handleOpenCompose} />;
       case "buyers":
-        return <BuyersBoard />;
+        return <BuyersBoard onMessage={handleOpenCompose} />;
       case "investors":
-        return <InvestorsHub />;
+        return <InvestorsHub onMessage={handleOpenCompose} />;
       case "partnerships":
-        return <PartnershipBoard />;
+        return <PartnershipBoard onMessage={handleOpenCompose} />;
       case "ideas":
         return <BusinessIdeas />;
       case "map":
@@ -100,6 +171,13 @@ function MainApp() {
         return <SuccessStories />;
       case "place-needs":
         return <PlaceNeeds />;
+      case "messages":
+        return (
+          <Messages
+            initialCompose={pendingCompose}
+            onClearCompose={() => setPendingCompose(null)}
+          />
+        );
       default:
         return <Dashboard profile={profile} onNavigate={setPage} />;
     }
@@ -127,6 +205,7 @@ function MainApp() {
         }}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        unreadMessages={unreadCount}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -134,6 +213,9 @@ function MainApp() {
           profile={profile}
           onMenuToggle={() => setSidebarOpen(!sidebarOpen)}
           onEditProfile={() => setShowProfileModal(true)}
+          unreadMessages={unreadCount}
+          inbox={inbox ?? []}
+          onGoToMessages={() => setPage("messages")}
         />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           {renderPage()}

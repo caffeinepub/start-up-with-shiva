@@ -7,13 +7,29 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export interface PartnerOpportunity {
+export interface BuyerRequest {
     id: bigint;
-    investmentNeeded: bigint;
     title: string;
     owner: Principal;
-    businessType: string;
     description: string;
+    category: string;
+    budget: bigint;
+    location: string;
+    contactPhone: string;
+}
+export interface UserDirectoryEntry {
+    principal: Principal;
+    city: string;
+    name: string;
+    accountType: AccountType;
+}
+export interface Listing {
+    id: bigint;
+    title: string;
+    owner: Principal;
+    description: string;
+    category: string;
+    price: bigint;
     location: string;
     contactPhone: string;
 }
@@ -26,16 +42,6 @@ export interface InvestorProfile {
     location: string;
     contactPhone: string;
     maxBudget: bigint;
-}
-export interface Listing {
-    id: bigint;
-    title: string;
-    owner: Principal;
-    description: string;
-    category: string;
-    price: bigint;
-    location: string;
-    contactPhone: string;
 }
 export interface AdminStats {
     totalBuyerRequests: bigint;
@@ -57,15 +63,17 @@ export interface Problem {
     category: string;
     location: string;
 }
-export interface BuyerRequest {
+export interface Message {
     id: bigint;
-    title: string;
-    owner: Principal;
-    description: string;
-    category: string;
-    budget: bigint;
-    location: string;
-    contactPhone: string;
+    senderLocation: string;
+    subject: string;
+    body: string;
+    isRead: boolean;
+    timestamp: bigint;
+    senderName: string;
+    senderAccountType: AccountType;
+    recipientId: Principal;
+    senderId: Principal;
 }
 export interface UserProfile {
     city: string;
@@ -73,6 +81,16 @@ export interface UserProfile {
     email: string;
     accountType: AccountType;
     phone: string;
+}
+export interface PartnerOpportunity {
+    id: bigint;
+    investmentNeeded: bigint;
+    title: string;
+    owner: Principal;
+    businessType: string;
+    description: string;
+    location: string;
+    contactPhone: string;
 }
 export enum AccountType {
     seller = "seller",
@@ -101,8 +119,12 @@ export interface backendInterface {
     getAllProblems(): Promise<Array<Problem>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getMyInbox(): Promise<Array<Message>>;
+    getMySentMessages(): Promise<Array<Message>>;
+    getUserDirectory(): Promise<Array<UserDirectoryEntry>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
+    markAsRead(messageId: bigint): Promise<void>;
     postBuyerRequest(title: string, description: string, budget: bigint, category: string, location: string, contactPhone: string): Promise<void>;
     postInvestorProfile(sector: string, minBudget: bigint, maxBudget: bigint, location: string, description: string, contactPhone: string): Promise<void>;
     postListing(title: string, description: string, price: bigint, category: string, location: string, contactPhone: string): Promise<void>;
@@ -110,5 +132,6 @@ export interface backendInterface {
     postProblem(title: string, description: string, location: string, category: string): Promise<void>;
     registerUser(profile: UserProfile): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    sendMessage(recipientId: Principal, subject: string, body: string): Promise<void>;
     upvoteProblem(id: bigint): Promise<void>;
 }

@@ -1,14 +1,14 @@
 import Array "mo:core/Array";
+import Int "mo:core/Int";
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Text "mo:core/Text";
+import Time "mo:core/Time";
 import Iter "mo:core/Iter";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
-
-
 
 actor {
   public type AccountType = {
@@ -92,10 +92,31 @@ actor {
     totalPartnerOpportunities : Nat;
   };
 
+  public type Message = {
+    id : Nat;
+    senderId : Principal;
+    senderName : Text;
+    senderAccountType : AccountType;
+    senderLocation : Text;
+    recipientId : Principal;
+    subject : Text;
+    body : Text;
+    timestamp : Int;
+    isRead : Bool;
+  };
+
+  public type UserDirectoryEntry = {
+    principal : Principal;
+    name : Text;
+    accountType : AccountType;
+    city : Text;
+  };
+
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
   var nextId = 1;
+  var messageId = 1;
   var sellerCount = 0;
   var buyerCount = 0;
   var investorCount = 0;
@@ -107,6 +128,7 @@ actor {
   let investorProfiles = Map.empty<Nat, InvestorProfile>();
   let partnerOpportunities = Map.empty<Nat, PartnerOpportunity>();
   let problems = Map.empty<Nat, Problem>();
+  let messages = Map.empty<Nat, Message>();
 
   public shared ({ caller }) func registerUser(profile : UserProfile) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
@@ -335,5 +357,91 @@ actor {
       investorProfiles = investorProfiles.values().toArray();
       partnerOpportunities = partnerOpportunities.values().toArray();
     };
+  };
+
+  // Messaging System
+
+  public shared ({ caller }) func sendMessage(recipientId : Principal, subject : Text, body : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can send messages");
+    };
+    let senderProfile = switch (users.get(caller)) {
+      case (null) { Runtime.trap("Sender profile not found") };
+      case (?profile) { profile };
+    };
+
+    let message : Message = {
+      id = messageId;
+      senderId = caller;
+      senderName = senderProfile.name;
+      senderAccountType = senderProfile.accountType;
+      senderLocation = senderProfile.city;
+      recipientId;
+      subject;
+      body;
+      timestamp = Time.now();
+      isRead = false;
+    };
+
+    messages.add(messageId, message);
+    messageId += 1;
+  };
+
+  public query ({ caller }) func getMyInbox() : async [Message] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can access inbox");
+    };
+    let inbox = messages.values().toArray().filter(
+      func(message) { message.recipientId == caller }
+    );
+
+    inbox.sort(
+      func(a, b) { Int.compare(Int.abs(b.timestamp), Int.abs(a.timestamp)) }
+    );
+  };
+
+  public query ({ caller }) func getMySentMessages() : async [Message] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can access sent messages");
+    };
+    let sent = messages.values().toArray().filter(
+      func(message) { message.senderId == caller }
+    );
+
+    sent.sort(
+      func(a, b) { Int.compare(Int.abs(b.timestamp), Int.abs(a.timestamp)) }
+    );
+  };
+
+  public shared ({ caller }) func markAsRead(messageId : Nat) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can mark messages as read");
+    };
+    switch (messages.get(messageId)) {
+      case (null) { Runtime.trap("Message not found") };
+      case (?message) {
+        if (message.recipientId != caller) {
+          Runtime.trap("Unauthorized: Only the recipient can mark this message as read");
+        };
+        let updatedMessage = { message with isRead = true };
+        messages.add(messageId, updatedMessage);
+      };
+    };
+  };
+
+  public query ({ caller }) func getUserDirectory() : async [UserDirectoryEntry] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only authenticated users can access user directory");
+    };
+    users.toArray().map(
+      func((p, profile)) {
+        {
+          principal = p;
+          name = profile.name;
+          accountType = profile.accountType;
+          city = profile.city;
+        };
+      }
+    );
   };
 };

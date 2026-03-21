@@ -295,4 +295,81 @@ export function useIsCallerAdmin() {
   });
 }
 
+// Messaging
+export function useGetMyInbox() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["inbox"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMyInbox();
+    },
+    enabled: !!actor && !isFetching,
+    refetchInterval: 30_000,
+  });
+}
+
+export function useGetMySentMessages() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["sentMessages"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getMySentMessages();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetUserDirectory() {
+  const { actor, isFetching } = useActor();
+  return useQuery({
+    queryKey: ["userDirectory"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getUserDirectory();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSendMessage() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: {
+      recipientId: string;
+      subject: string;
+      body: string;
+    }) => {
+      if (!actor) throw new Error("Not connected");
+      const { Principal } = await import("@icp-sdk/core/principal");
+      await actor.sendMessage(
+        Principal.fromText(data.recipientId),
+        data.subject,
+        data.body,
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sentMessages"] });
+      toast.success("Message sent!");
+    },
+    onError: () => toast.error("Failed to send message."),
+  });
+}
+
+export function useMarkAsRead() {
+  const { actor } = useActor();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (messageId: bigint) => {
+      if (!actor) throw new Error("Not connected");
+      await actor.markAsRead(messageId);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["inbox"] });
+    },
+  });
+}
+
 export type { AccountType };

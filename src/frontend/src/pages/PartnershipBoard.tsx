@@ -13,14 +13,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Handshake, Loader2, Phone, Plus } from "lucide-react";
+import { Handshake, Loader2, MessageSquare, Phone, Plus } from "lucide-react";
 import { useState } from "react";
+import type { ComposeTarget } from "../App";
 import {
   useGetAllPartnerOpportunities,
   usePostPartnerOpportunity,
 } from "../hooks/useQueries";
 
-export default function PartnershipBoard() {
+interface PartnershipBoardProps {
+  onMessage?: (target: ComposeTarget) => void;
+}
+
+export default function PartnershipBoard({ onMessage }: PartnershipBoardProps) {
   const { data: opportunities, isLoading } = useGetAllPartnerOpportunities();
   const postOpportunity = usePostPartnerOpportunity();
   const [open, setOpen] = useState(false);
@@ -257,6 +262,23 @@ export default function PartnershipBoard() {
                     <Phone className="w-3 h-3" />
                     <span>{opp.contactPhone}</span>
                   </div>
+                )}
+                {onMessage && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-2 mt-1 hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={() =>
+                      onMessage({
+                        recipientId: opp.owner.toText(),
+                        recipientName: "",
+                        subject: `Re: ${opp.title}`,
+                      })
+                    }
+                    data-ocid={`partnerships.message.button.${i + 1}`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" /> Message Partner
+                  </Button>
                 )}
               </CardContent>
             </Card>

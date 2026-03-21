@@ -86,6 +86,24 @@ export const UserProfile = IDL.Record({
   'accountType' : AccountType,
   'phone' : IDL.Text,
 });
+export const Message = IDL.Record({
+  'id' : IDL.Nat,
+  'senderLocation' : IDL.Text,
+  'subject' : IDL.Text,
+  'body' : IDL.Text,
+  'isRead' : IDL.Bool,
+  'timestamp' : IDL.Int,
+  'senderName' : IDL.Text,
+  'senderAccountType' : AccountType,
+  'recipientId' : IDL.Principal,
+  'senderId' : IDL.Principal,
+});
+export const UserDirectoryEntry = IDL.Record({
+  'principal' : IDL.Principal,
+  'city' : IDL.Text,
+  'name' : IDL.Text,
+  'accountType' : AccountType,
+});
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
@@ -118,12 +136,16 @@ export const idlService = IDL.Service({
   'getAllProblems' : IDL.Func([], [IDL.Vec(Problem)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getMyInbox' : IDL.Func([], [IDL.Vec(Message)], ['query']),
+  'getMySentMessages' : IDL.Func([], [IDL.Vec(Message)], ['query']),
+  'getUserDirectory' : IDL.Func([], [IDL.Vec(UserDirectoryEntry)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+  'markAsRead' : IDL.Func([IDL.Nat], [], []),
   'postBuyerRequest' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Nat, IDL.Text, IDL.Text, IDL.Text],
       [],
@@ -147,6 +169,7 @@ export const idlService = IDL.Service({
   'postProblem' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
   'registerUser' : IDL.Func([UserProfile], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'sendMessage' : IDL.Func([IDL.Principal, IDL.Text, IDL.Text], [], []),
   'upvoteProblem' : IDL.Func([IDL.Nat], [], []),
 });
 
@@ -231,6 +254,24 @@ export const idlFactory = ({ IDL }) => {
     'accountType' : AccountType,
     'phone' : IDL.Text,
   });
+  const Message = IDL.Record({
+    'id' : IDL.Nat,
+    'senderLocation' : IDL.Text,
+    'subject' : IDL.Text,
+    'body' : IDL.Text,
+    'isRead' : IDL.Bool,
+    'timestamp' : IDL.Int,
+    'senderName' : IDL.Text,
+    'senderAccountType' : AccountType,
+    'recipientId' : IDL.Principal,
+    'senderId' : IDL.Principal,
+  });
+  const UserDirectoryEntry = IDL.Record({
+    'principal' : IDL.Principal,
+    'city' : IDL.Text,
+    'name' : IDL.Text,
+    'accountType' : AccountType,
+  });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
@@ -263,12 +304,16 @@ export const idlFactory = ({ IDL }) => {
     'getAllProblems' : IDL.Func([], [IDL.Vec(Problem)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getMyInbox' : IDL.Func([], [IDL.Vec(Message)], ['query']),
+    'getMySentMessages' : IDL.Func([], [IDL.Vec(Message)], ['query']),
+    'getUserDirectory' : IDL.Func([], [IDL.Vec(UserDirectoryEntry)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
+    'markAsRead' : IDL.Func([IDL.Nat], [], []),
     'postBuyerRequest' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Nat, IDL.Text, IDL.Text, IDL.Text],
         [],
@@ -292,6 +337,7 @@ export const idlFactory = ({ IDL }) => {
     'postProblem' : IDL.Func([IDL.Text, IDL.Text, IDL.Text, IDL.Text], [], []),
     'registerUser' : IDL.Func([UserProfile], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'sendMessage' : IDL.Func([IDL.Principal, IDL.Text, IDL.Text], [], []),
     'upvoteProblem' : IDL.Func([IDL.Nat], [], []),
   });
 };

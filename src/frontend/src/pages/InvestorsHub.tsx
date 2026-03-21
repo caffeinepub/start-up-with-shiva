@@ -20,8 +20,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Phone, Plus } from "lucide-react";
+import { Loader2, MessageSquare, Phone, Plus } from "lucide-react";
 import { useState } from "react";
+import type { ComposeTarget } from "../App";
 import {
   useGetAllInvestorProfiles,
   usePostInvestorProfile,
@@ -37,7 +38,11 @@ const SECTORS = [
   "Agriculture",
 ];
 
-export default function InvestorsHub() {
+interface InvestorsHubProps {
+  onMessage?: (target: ComposeTarget) => void;
+}
+
+export default function InvestorsHub({ onMessage }: InvestorsHubProps) {
   const { data: investors, isLoading } = useGetAllInvestorProfiles();
   const postInvestor = usePostInvestorProfile();
   const [open, setOpen] = useState(false);
@@ -270,6 +275,23 @@ export default function InvestorsHub() {
                     <Phone className="w-3 h-3" />
                     <span>{inv.contactPhone}</span>
                   </div>
+                )}
+                {onMessage && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-2 mt-1 hover:bg-primary hover:text-primary-foreground transition-colors"
+                    onClick={() =>
+                      onMessage({
+                        recipientId: inv.owner.toText(),
+                        recipientName: "",
+                        subject: `Interested in your ${inv.sector} investment opportunity`,
+                      })
+                    }
+                    data-ocid={`investors.message.button.${i + 1}`}
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" /> Message Investor
+                  </Button>
                 )}
               </CardContent>
             </Card>

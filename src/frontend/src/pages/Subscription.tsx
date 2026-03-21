@@ -1,8 +1,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Check } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 const features = [
@@ -33,8 +34,20 @@ const revenue = [
 ];
 
 export default function Subscription() {
+  const [showQR, setShowQR] = useState(false);
+  const [screenshotUploaded, setScreenshotUploaded] = useState(false);
+
   const handleSubscribe = () => {
-    toast.success("Redirecting to payment...");
+    setShowQR(true);
+  };
+
+  const handleScreenshotUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setScreenshotUploaded(true);
+      toast.success(
+        "Payment screenshot received! Your access will be activated within a few minutes.",
+      );
+    }
   };
 
   return (
@@ -46,7 +59,6 @@ export default function Subscription() {
         </p>
       </div>
 
-      {/* Pricing card */}
       <Card
         className="shadow-card overflow-hidden border-primary/30"
         data-ocid="subscription.pricing.card"
@@ -80,38 +92,89 @@ export default function Subscription() {
 
           <Separator className="border-white/10 mb-6" />
 
-          <div className="space-y-4">
-            <div>
-              <p className="text-white/60 text-sm text-center mb-3">Pay with</p>
-              <div className="flex justify-center gap-3 flex-wrap">
-                {["Google Pay", "PhonePe", "Paytm"].map((method) => (
-                  <Badge
-                    key={method}
-                    variant="outline"
-                    className="border-white/20 text-white/80 bg-white/10 px-4 py-1.5 text-sm"
-                  >
-                    {method}
-                  </Badge>
-                ))}
+          {!showQR ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-white/60 text-sm text-center mb-3">
+                  Pay with
+                </p>
+                <div className="flex justify-center gap-3 flex-wrap">
+                  {["Google Pay", "PhonePe", "Paytm"].map((method) => (
+                    <Badge
+                      key={method}
+                      variant="outline"
+                      className="border-white/20 text-white/80 bg-white/10 px-4 py-1.5 text-sm"
+                    >
+                      {method}
+                    </Badge>
+                  ))}
+                </div>
               </div>
+              <Button
+                data-ocid="subscription.subscribe.primary_button"
+                onClick={handleSubscribe}
+                className="w-full bg-orange-brand hover:bg-orange-dark text-white font-bold text-lg py-6 shadow-orange"
+              >
+                Subscribe Now — ₹5 Only
+              </Button>
+              <p className="text-center text-white/40 text-xs">
+                🔒 Secure payment. Cancel anytime. No hidden charges.
+              </p>
             </div>
-
-            <Button
-              data-ocid="subscription.subscribe.primary_button"
-              onClick={handleSubscribe}
-              className="w-full bg-orange-brand hover:bg-orange-dark text-white font-bold text-lg py-6 shadow-orange"
-            >
-              Subscribe Now — ₹5 Only
-            </Button>
-
-            <p className="text-center text-white/40 text-xs">
-              🔒 Secure payment. Cancel anytime. No hidden charges.
-            </p>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-white text-center font-semibold">
+                Scan & Pay ₹5 via PhonePe
+              </p>
+              <div className="flex justify-center">
+                <div className="bg-white rounded-2xl p-3 w-fit">
+                  <img
+                    src="/assets/uploads/AccountQRCodeUnion-Bank-Of-India-1238_DARK_THEME-1.png"
+                    alt="PhonePe QR Code - DURGA SHIVASAI"
+                    className="w-56 h-auto rounded-lg"
+                  />
+                </div>
+              </div>
+              <p className="text-white/70 text-sm text-center">
+                Pay to:{" "}
+                <span className="font-bold text-white">DURGA SHIVASAI</span>
+              </p>
+              <Separator className="border-white/10" />
+              <div className="space-y-2">
+                <p className="text-white/70 text-sm text-center">
+                  After paying, upload your payment screenshot to activate
+                  access:
+                </p>
+                {!screenshotUploaded ? (
+                  <label className="block cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleScreenshotUpload}
+                    />
+                    <div className="w-full border-2 border-dashed border-white/30 rounded-xl py-4 px-6 text-center text-white/60 hover:border-orange-brand/60 hover:text-white/80 transition-colors">
+                      📷 Upload Payment Screenshot
+                    </div>
+                  </label>
+                ) : (
+                  <div className="w-full bg-green-500/20 border border-green-500/40 rounded-xl py-4 px-6 text-center text-green-300 text-sm">
+                    ✅ Screenshot received! Access will be activated soon.
+                  </div>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowQR(false)}
+                className="text-white/40 text-xs text-center w-full hover:text-white/60 transition-colors"
+              >
+                ← Back
+              </button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Revenue model */}
       <div>
         <h2 className="font-display font-semibold text-lg mb-4">
           How Startup With Shiva Earns

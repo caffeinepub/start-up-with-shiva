@@ -55,6 +55,18 @@ export interface Listing {
   'location' : string,
   'contactPhone' : string,
 }
+export interface Message {
+  'id' : bigint,
+  'senderLocation' : string,
+  'subject' : string,
+  'body' : string,
+  'isRead' : boolean,
+  'timestamp' : bigint,
+  'senderName' : string,
+  'senderAccountType' : AccountType,
+  'recipientId' : Principal,
+  'senderId' : Principal,
+}
 export interface PartnerOpportunity {
   'id' : bigint,
   'investmentNeeded' : bigint,
@@ -73,6 +85,12 @@ export interface Problem {
   'description' : string,
   'category' : string,
   'location' : string,
+}
+export interface UserDirectoryEntry {
+  'principal' : Principal,
+  'city' : string,
+  'name' : string,
+  'accountType' : AccountType,
 }
 export interface UserProfile {
   'city' : string,
@@ -104,8 +122,12 @@ export interface _SERVICE {
   'getAllProblems' : ActorMethod<[], Array<Problem>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getMyInbox' : ActorMethod<[], Array<Message>>,
+  'getMySentMessages' : ActorMethod<[], Array<Message>>,
+  'getUserDirectory' : ActorMethod<[], Array<UserDirectoryEntry>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'markAsRead' : ActorMethod<[bigint], undefined>,
   'postBuyerRequest' : ActorMethod<
     [string, string, bigint, string, string, string],
     undefined
@@ -125,6 +147,7 @@ export interface _SERVICE {
   'postProblem' : ActorMethod<[string, string, string, string], undefined>,
   'registerUser' : ActorMethod<[UserProfile], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'sendMessage' : ActorMethod<[Principal, string, string], undefined>,
   'upvoteProblem' : ActorMethod<[bigint], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;

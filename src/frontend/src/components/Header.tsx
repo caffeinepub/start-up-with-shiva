@@ -5,27 +5,38 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, ChevronDown, Menu, User } from "lucide-react";
+import { Bell, ChevronDown, Mail, Menu, TrendingUp, User } from "lucide-react";
 import { useState } from "react";
 import type { UserProfile } from "../App";
+import type { Message } from "../backend.d";
 
 interface HeaderProps {
   profile: UserProfile | null;
   onMenuToggle: () => void;
   onEditProfile: () => void;
+  unreadMessages?: number;
+  inbox?: Message[];
+  onGoToMessages?: () => void;
 }
 
-const notifications = [
+const staticNotifs = [
   {
-    id: 1,
+    id: "s1",
     text: "New opportunity near you - Cheap food demand in Hitech City",
     time: "2m ago",
+    icon: "trend",
   },
-  { id: 2, text: "Demand increasing in Balapur area", time: "1h ago" },
   {
-    id: 3,
+    id: "s2",
+    text: "Demand increasing in Balapur area",
+    time: "1h ago",
+    icon: "trend",
+  },
+  {
+    id: "s3",
     text: "Export opportunity: UAE wants vegetables from India",
     time: "3h ago",
+    icon: "trend",
   },
 ];
 
@@ -33,13 +44,30 @@ export default function Header({
   profile,
   onMenuToggle,
   onEditProfile,
+  unreadMessages = 0,
+  inbox = [],
+  onGoToMessages,
 }: HeaderProps) {
   const [notifOpen, setNotifOpen] = useState(false);
-  const [readNotifs, setReadNotifs] = useState<number[]>([]);
+  const [readStaticNotifs, setReadStaticNotifs] = useState<string[]>([]);
+  const [readMessageNotifIds, setReadMessageNotifIds] = useState<bigint[]>([]);
 
-  const unreadCount = notifications.filter(
-    (n) => !readNotifs.includes(n.id),
+  // Top 3 unread messages as notifications
+  const unreadMsgs = inbox
+    .filter((m) => !m.isRead && !readMessageNotifIds.includes(m.id))
+    .slice(0, 3);
+
+  const unreadStaticCount = staticNotifs.filter(
+    (n) => !readStaticNotifs.includes(n.id),
   ).length;
+
+  const totalUnread = unreadMessages + unreadStaticCount;
+
+  const handleMarkMsgRead = (id: bigint) => {
+    setReadMessageNotifIds((prev) => [...prev, id]);
+    onGoToMessages?.();
+    setNotifOpen(false);
+  };
 
   return (
     <header className="h-16 bg-card border-b border-border flex items-center px-4 md:px-6 gap-4 flex-shrink-0">
@@ -63,9 +91,9 @@ export default function Header({
             className="relative p-2 rounded-lg hover:bg-muted transition-colors"
           >
             <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
+            {totalUnread > 0 && (
               <span className="absolute top-1 right-1 w-4 h-4 bg-orange-brand text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                {unreadCount}
+                {totalUnread > 9 ? "9+" : totalUnread}
               </span>
             )}
           </button>
@@ -78,23 +106,63 @@ export default function Header({
           <div className="px-3 py-2 border-b border-border">
             <p className="font-semibold text-sm">Notifications</p>
           </div>
-          {notifications.map((n) => (
+
+          {/* Message notifications */}
+          {unreadMsgs.map((msg) => (
             <DropdownMenuItem
-              key={n.id}
-              className="flex flex-col items-start gap-0.5 py-3 cursor-pointer"
-              onClick={() => setReadNotifs((prev) => [...prev, n.id])}
+              key={String(msg.id)}
+              className="flex items-start gap-2.5 py-3 cursor-pointer"
+              onClick={() => handleMarkMsgRead(msg.id)}
+              data-ocid={`header.notification.message.${String(msg.id)}`}
             >
-              <span
-                className={`text-sm leading-snug ${readNotifs.includes(n.id) ? "text-muted-foreground" : "font-medium"}`}
-              >
-                {!readNotifs.includes(n.id) && (
-                  <span className="inline-block w-1.5 h-1.5 bg-orange-brand rounded-full mr-1.5 align-middle" />
-                )}
-                {n.text}
-              </span>
-              <span className="text-xs text-muted-foreground">{n.time}</span>
+              <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <Mail className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold leading-snug">
+                  <span className="inline-block w-1.5 h-1.5 bg-primary rounded-full mr-1.5 align-middle" />
+                  New message from {msg.senderName || "Unknown"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {msg.subject}
+                </p>
+              </div>
             </DropdownMenuItem>
           ))}
+
+          {/* Static opportunity notifications */}
+          {staticNotifs.map((n) => (
+            <DropdownMenuItem
+              key={n.id}
+              className="flex items-start gap-2.5 py-3 cursor-pointer"
+              onClick={() => setReadStaticNotifs((prev) => [...prev, n.id])}
+            >
+              <div className="w-7 h-7 rounded-full bg-orange-brand/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <TrendingUp className="w-3.5 h-3.5 text-orange-brand" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p
+                  className={`text-sm leading-snug ${
+                    readStaticNotifs.includes(n.id)
+                      ? "text-muted-foreground"
+                      : "font-medium"
+                  }`}
+                >
+                  {!readStaticNotifs.includes(n.id) && (
+                    <span className="inline-block w-1.5 h-1.5 bg-orange-brand rounded-full mr-1.5 align-middle" />
+                  )}
+                  {n.text}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">{n.time}</p>
+              </div>
+            </DropdownMenuItem>
+          ))}
+
+          {totalUnread === 0 && (
+            <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+              You're all caught up!
+            </div>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
